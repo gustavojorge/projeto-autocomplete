@@ -1,0 +1,8 @@
+type Query {
+    getSuggestions(prefix: String!, limit: Int = 20): [Suggestion!]!
+}
+
+type Suggestion {
+    term: String!
+    definition: String!
+}
