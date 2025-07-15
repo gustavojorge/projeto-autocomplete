@@ -33,8 +33,7 @@ const SearchInstructions: React.FC = () => {
 
         <p className="flex items-center">
           <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
-          Para testar, tente "ação" ou "direito" (este último com mais de 30
-          termos)
+          Para testar, tente "ação" ou "direito" (ambos com mais de 30 termos)
         </p>
       </div>
     </div>
