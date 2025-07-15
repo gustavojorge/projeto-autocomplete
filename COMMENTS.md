@@ -8,6 +8,7 @@ Este documento detalha as decisões de arquitetura, as escolhas técnicas, a imp
 
 O desafio foi abordado com uma arquitetura modular, dividida em duas camadas princpais (como sugerido na descrição):
 um Frontend desenvolvido em ReactJS e um Backend construído com Spring Boot em Java.
+Essa abordagem foi escolhida visando a manutenção e escalabilidade do sistema, permitindo que cada parte evolua de forma independente.
 A comunicação entre essas camadas é feita via GraphQL.
 Todo o ambiente de desenvolvimento e produção é conteinerizado utilizando Docker Compose.
 
@@ -107,7 +108,7 @@ O frontend foi desenvolvido utilizando ReactJS e TypeScript. Para a comunicaçã
 
 ### 2.1 Organização e Componentização:
 
-A estrutura do projeto no frontend foi feita visando maximizar a reutilização de componentes, além de permitir uma organização clara dos diretórios. A seguir temos a descrição de alguns dos arquivos que compõem o Frontend:
+A estrutura do projeto no frontend foi feita visando maximizar a reutilização de componentes, além de permitir uma organização clara dos diretórios. A seguir temos a descrição de alguns dos arquivos que o compõem:
 
 - **SearchAutocomplete.tsx**: Componente principal responsável pela lógica e renderização dos demais elementos da interface.
 
@@ -139,7 +140,7 @@ O backend foi desenvolvido em Java utilizando o framework Spring Boot. A escolha
 
 ### 3.1 Arquitetura:
 
-A arquitetura do backend segue o padrão de camadas, com classes bem definidas para cada responsabilidade: config, controller, modal, service e util. A seguir estão alguns dos componentes do backend.
+A arquitetura do backend segue o padrão de camadas, com classes bem definidas para cada responsabilidade: config, controller, modal, service e util. Essa abordagem promove a separação de responsabilidades entre as classes, tornando o código mais organizado e fácil de manter. A seguir estão alguns dos componentes do backend.
 
 - **AutocompleteApplication.jav**: Classe principal que inicializa a aplicação.
 
@@ -227,6 +228,8 @@ Se houvesse tempo adicional, as seguintes melhorias seriam consideradas:
 
 1. Adição de estatísticas: Implementar métricas como a frequência com que determinados termos são pesquisados, bem como estatísticas internas da Trie — como a quantidade total de nós e número de palavras armazenadas.
 
+Para isso, adicionaria um atributo "frequency" ao Suggestion model que seria incrementado a cada pesquisa do termo. As estatísticas internas da Trie poderiam ser expostas através de uma query GraphQL específica, retornando informações que são fáceis de obter com os métdos nativos de um objeto Java (como trie.size()).
+
 2. Testes no frontend: Expandir a cobertura de testes para incluir testes automatizados no frontend.
 
-3. Interface de administração: Desenvolver um painel que permita cadastrar, editar ou remover termos diretamente pela interface.
+3. Interface de administração: Desenvolver um painel que permita cadastrar, editar e remover termos diretamente pela interface. Para isso, nova queries do tipo "mutation" deveriam ser adicionadas ao schema do Graphql, bem como endpoints específicos para tais requisições, tais como: setTerm(), editTerm() e deleteTerm().
