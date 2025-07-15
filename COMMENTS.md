@@ -1,18 +1,23 @@
-# Desafio de Autocomplete
+## Desafio de Autocomplete
 
 Este documento detalha as decisões de arquitetura, as escolhas técnicas, a implementação e as decisões tomadas durante o desenvolvimento da aplicação.
 
 ---
 
-## 1. Arquitetura
+### Arquitetura geral
 
 O desafio foi abordado com uma arquitetura modular, dividida em duas camadas princpais (como sugerido na descrição):
 um Frontend desenvolvido em ReactJS e um Backend construído com Spring Boot em Java.
-Essa abordagem foi escolhida visando a manutenção e escalabilidade do sistema, permitindo que cada parte evolua de forma independente.
 A comunicação entre essas camadas é feita via GraphQL.
 Todo o ambiente de desenvolvimento e produção é conteinerizado utilizando Docker Compose.
 
-Abaixo temos a organização dos arquivos no respositório.
+Internamente, o sistema segue uma estrutura em camadas lógicas, cada uma com uma responsabilidade específica. Essa abordagem foi escolhida visando a manutenção e escalabilidade do sistema, permitindo que cada parte evolua de forma independente.
+
+---
+
+### Visão geral da estrutura do projeto
+
+Esta seção descreve brevemente a finalidade de cada arquivo e classe na estrutura do projeto.
 
 ```
 projeto-autocomplete/
@@ -102,11 +107,11 @@ projeto-autocomplete/
 
 ---
 
-## 2. Frontend
+### Frontend
 
 O frontend foi desenvolvido utilizando ReactJS e TypeScript. Para a comunicação com a API, foi empregado o Apollo Client. A estilização foi realizada com Tailwind CSS, o que permitiu criar um desing responsivo.
 
-### 2.1 Organização e Componentização:
+#### Organização e Componentização:
 
 A estrutura do projeto no frontend foi feita visando maximizar a reutilização de componentes, além de permitir uma organização clara dos diretórios. A seguir temos a descrição de alguns dos arquivos que o compõem:
 
@@ -128,19 +133,32 @@ A estrutura do projeto no frontend foi feita visando maximizar a reutilização 
 
 - **queries.js**: Definição das queries GraphQL utilizadass.
 
-### 2.2 Normalização do texto:
+#### Normalização do texto:
 
 Uma decisão importante para a experiência do usuário foi a implementação de um componente para normalizar o texto digitado pelo usuário (localizado em searchUtils.tsx). Por "normalizar", entende-se remover acentos, converter todos os caracteres para minúsculas e eliminar espaços que não comprometam a busca, permitindo que termos como "ação", "Acao" ou "AÇÃO" sejam tratados da mesma forma. Isso garante que o sistema ofereça sugestões mais consistentes, independentemente de como o usuário digita o termo.
 
 ---
 
-## 3. Backend
+### Backend
 
 O backend foi desenvolvido em Java utilizando o framework Spring Boot. A escolha dessas tecnologias foi devido a maior familiaridade com o ecossistema Java, além da facilidade de integração com bibliotecas prontas para lidar com requisições GraphQL e realização de testes unitários e de integração (JUnit e Mockito).
 
-### 3.1 Arquitetura:
+#### Arquitetura em camadas:
 
-A arquitetura do backend segue o padrão de camadas, com classes bem definidas para cada responsabilidade: config, controller, modal, service e util. Essa abordagem promove a separação de responsabilidades entre as classes, tornando o código mais organizado e fácil de manter. A seguir estão alguns dos componentes do backend.
+A arquitetura do backend segue o padrão de camadas, com classes bem definidas para cada responsabilidade: config, controller, modal, service e util. Essa abordagem promove a separação de responsabilidades entre as classes, tornando o código mais organizado e fácil de manter.
+
+Abaixo estão as principais camadas da arquitetura do backend e seus respectivos diretórios:
+
+| Camada               | Descrição                                                                                                                                                                                                                 | Pacote                        |
+| :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------- |
+| **Model Layer**      | Contém as classes de modelo da aplicação, como `Suggestion`, que representa os termos e definições a serem sugeridos. Também possui a implementação da estrutura Trie (Trie, TrieNode) utilizada para buscas por prefixo. | `com.autocomplete.model`      |
+| **Service Layer**    | Lógica de negócio, como carregamento de dados (`DataLoadService`) e operações sobre a Trie (`TrieService`).                                                                                                               | `com.autocomplete.service`    |
+| **Controller Layer** | Exposição do endpoint GraphQL via `SearchController`, que orquestra as chamadas para os serviços.                                                                                                                         | `com.autocomplete.controller` |
+| **Util Layer**       | Contém utilitários como `TextNormalizer`, responsável por normalizar texto para buscas.                                                                                                                                   | `com.autocomplete.util`       |
+| **GraphQL Layer**    | Define o schema e as queries GraphQL expostas pela aplicação.                                                                                                                                                             | `src/main/resources/graphql/` |
+| **Config Layer**     | Gerencia configurações da aplicação, incluindo a configuração do CORS.                                                                                                                                                    | `com.autocomplete.config`     |
+
+A seguir estão alguns dos componentes do backend.
 
 - **AutocompleteApplication.jav**: Classe principal que inicializa a aplicação.
 
@@ -158,7 +176,7 @@ A arquitetura do backend segue o padrão de camadas, com classes bem definidas p
 
 - **SearchController.java**: O controlador GraphQL que expõe o endpoint /graphql para o frontend. Ele define a query getSuggestions, que aceita um prefix e um limit como argumentos e delega a lógica de busca ao TrieService.
 
-### 3.2 Fluxo de uma requisição:
+#### Fluxo de uma requisição:
 
 1 - Ao iniciar, o Spring Boot executa o @PostConstruct no TrieService, que por sua vez utiliza o DataLoadService para carregar o glossary.json e popular a Trie em memória.
 
@@ -178,7 +196,7 @@ O diagrama de sequências abaixo descreve esse fluxo:
 
 ---
 
-### 3.3 Testes
+#### Testes
 
 Foram construídos aproximadaente 40 testes unitários para o backend, cobrindo as principais funcionalidades e casos de borda da aplicação. Os testes foram projetados para garantir o cumprimento dos requisitos do sistema.
 
@@ -198,7 +216,7 @@ Também foram realizados testes de integração, testando toda a API ponta a pon
 
 ---
 
-## 4. Estrutura de Armazenamento (Trie)
+### Estrutura de Armazenamento (Trie)
 
 A escolha da Trie como estrutura de dados para o armazenamento das sugestões foi pensada devido às suas características intrínsecas, que se adequam perfetamente com os requisitos de um sistema de busca por prefixo. Para mais, a Trie é otimizada para operações de inserção de termos e busca por prefixo. Entretanto, sabemos que em aplicações reais ou com quantidade da dados maiores, o uso de um banco de dados faz-se necessário.
 
@@ -208,7 +226,7 @@ O populamento automático da Trie é realizado pela classe DataLoadService.java,
 
 ---
 
-## 5. Obtenção dos Dados
+### Obtenção dos Dados
 
 Para a obtenção dos dados das sugestões, foi realizado um web scraping em Python no site do STF (Supremo Tribunal Federal), especificamente na seção de glossário jurídico (https://portal.stf.jus.br/jurisprudencia/glossario.asp). Este processo resultou na coleta de aproximadamente 180 termos e suas respectivas definições, que foram salvas em um arquivo glossary.json.
 
@@ -222,7 +240,7 @@ Atualmente, a Trie contém cerca de 250 sugestões, combinando os termos reais o
 
 ---
 
-## Implementações Futuras
+### Implementações Futuras
 
 Se houvesse tempo adicional, as seguintes melhorias seriam consideradas:
 
@@ -233,3 +251,28 @@ Para isso, adicionaria um atributo "frequency" ao Suggestion model que seria inc
 2. Testes no frontend: Expandir a cobertura de testes para incluir testes automatizados no frontend.
 
 3. Interface de administração: Desenvolver um painel que permita cadastrar, editar e remover termos diretamente pela interface. Para isso, nova queries do tipo "mutation" deveriam ser adicionadas ao schema do Graphql, bem como endpoints específicos para tais requisições, tais como: setTerm(), editTerm() e deleteTerm().
+
+---
+
+### Como compilar e executar o projeto
+
+1. Clone deste repositório (ou fazer o download .zip):
+
+```
+ git clone https://github.com/gustavojorge/projeto-autocomplete.git
+```
+
+2. Rodar o Docker compose
+
+```
+docker compose up --build
+```
+
+**Observações**:
+
+- Certifique-se de que o Docker esteja instalado e em execução em sua máquina antes de rodar o projeto.
+- O backend será executado na porta 8080 → http://localhost:8080.
+- O frontend será executado na porta 3000 → http://localhost:3000
+- Verifique se nenhuma outra aplicação está utilizando as portas 8080, 3000 ou 5173, pois isso poderá impedir a execução correta do projeto.
+
+---
