@@ -97,9 +97,6 @@ projeto-autocomplete/
 │   ├── Dockerfile
 │   └── .dockerignore
 │
-├── scraper/
-│   └── scrap_glossario_stf.py
-│
 ├── docker-compose.yml
 ├── README.md
 └── COMMENTS.md
